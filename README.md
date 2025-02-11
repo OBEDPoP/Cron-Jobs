@@ -1,4 +1,4 @@
-# **CRON-tabs**
+# **CRON-Jobs**
 
 # **Commonly Used Cron Jobs by System Administrators**  
 
@@ -120,39 +120,42 @@ mysqldump -u root -p'password' mydatabase > /backups/db_$(date +\%F).sql
 
 ---
 
-## **3. Managing and Debugging Cron Jobs**
-### **Check if the Cron Service is Running**
-```bash
-systemctl status cron
-```
-or
-```bash
-service cron status
-```
+## **3. Advanced Cron Job: Custom Shell Script Execution**
 
-### **View Logs of Executed Cron Jobs**
-```bash
-grep CRON /var/log/syslog
-```
+### **Example: Automated System Health Check Script**
 
-### **Manually Trigger a Cron Job for Testing**
-```bash
-run-parts --test /etc/cron.daily
-```
+1. **Create a shell script:**
+    ```bash
+    nano /usr/local/bin/system_health_check.sh
+    ```
 
-### **Debugging Cron Job Failures**
-- Redirect output to a log file for debugging:
-  ```bash
-  0 2 * * * mysqldump -u root -p'password' mydatabase > /backups/db_$(date +\%F).sql 2>/var/log/db_backup.log
-  ```
-- Check logs:
-  ```bash
-  cat /var/log/db_backup.log
-  ```
-- Ensure the script has execute permissions:
-  ```bash
-  chmod +x /path/to/script.sh
-  ```
+2. **Add the following content:**
+    ```bash
+    #!/bin/bash
+    TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
+    LOG_FILE="/var/log/system_health_$TIMESTAMP.log"
+    
+    echo "System Health Check - $TIMESTAMP" > $LOG_FILE
+    echo "Uptime:" >> $LOG_FILE
+    uptime >> $LOG_FILE
+    echo "Disk Usage:" >> $LOG_FILE
+    df -h >> $LOG_FILE
+    echo "Memory Usage:" >> $LOG_FILE
+    free -m >> $LOG_FILE
+    
+    mail -s "System Health Report" admin@example.com < $LOG_FILE
+    ```
+
+3. **Give execute permissions:**
+    ```bash
+    chmod +x /usr/local/bin/system_health_check.sh
+    ```
+
+4. **Schedule the script in crontab:**
+    ```bash
+    0 4 * * * /usr/local/bin/system_health_check.sh
+    ```
+    *Runs daily at 4 AM and sends a system health report via email.*
 
 ---
 
@@ -161,6 +164,6 @@ run-parts --test /etc/cron.daily
 - **System admins commonly schedule tasks like backups, log cleanup, security scans, and service restarts.**
 - **Using `crontab -e`, admins define jobs with specific schedules.**
 - **Debugging cron issues involves checking logs and testing commands manually.**
+- **Advanced cron jobs can execute shell scripts for more complex tasks.**
 
 ---
-
